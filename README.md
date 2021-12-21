@@ -16,8 +16,11 @@ Then just:
 ```
 git clone https://github.com/undefinednpc/sway-gest
 cd sway-gest
-chmod +x build.sh
-./build.sh
+make sway-gest
 ```
-Move the generated binary from bin to whatever location you want.
+After that, you can move the binary yourself to your preffered location, or run:
+`make install`
+
+That will install `sway-gest` into `/usr/local/bin`. Remove it with `make uninstall`.
+
 You can then add `exec sway-gest` to the Sway config. (Again, once it's usable.)
