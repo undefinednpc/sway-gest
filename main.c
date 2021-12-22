@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stddef.h>
 #include <sys/socket.h>
 
 #include <json-c/json_object.h>
@@ -25,6 +26,17 @@ static const struct libinput_interface interface = {
 	.close_restricted = close_restricted,
 };
 
+static void print_event_type(struct libinput_event *event)
+{
+	const char *type = NULL;
+	switch(libinput_event_get_type(event)) {
+			case LIBINPUT_EVENT_DEVICE_ADDED:
+				type = "DEVICE ADDED";
+				break;
+	}
+	printf("%s", type);
+}
+
 int main()
 {
 	struct libinput *li;
@@ -33,11 +45,13 @@ int main()
 
 	udev = udev_new();
 
-	li = libinput_udev_create_context(&interface, 0, udev);
+	li = libinput_udev_create_context(&interface, NULL, udev);
 	libinput_udev_assign_seat(li, "seat0");
 	libinput_dispatch(li);
 
-	while ((event = libinput_get_event(li)) != 0) {
+	while ((event = libinput_get_event(li)) != NULL) {
+
+		print_event_type(event);		
 
 		libinput_event_destroy(event);
 		libinput_dispatch(li);
