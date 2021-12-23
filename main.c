@@ -10,6 +10,9 @@
 #include <libinput.h>
 #include <libudev.h>
 
+#define FALSE 0
+#define TRUE 1
+
 typedef enum { RIGHT, LEFT } Direction;
 
 static int open_restricted(const char *path, int flags, void *user_data)
@@ -30,7 +33,12 @@ static const struct libinput_interface interface = {
 
 Direction get_gesture_direction(struct libinput_event_gesture *event) 
 {
-	return 0;
+	if(libinput_event_gesture_get_dx(event) > 0) {
+		return RIGHT;
+	}
+	else {
+		return LEFT;
+	}
 }
 
 static void sway_workspace_left()
@@ -43,17 +51,6 @@ static void sway_workspace_right()
 	assert(!"Not Implemented");	
 }
 
-static void print_event_type(struct libinput_event *event)
-{
-	const char *type = 0;
-	switch(libinput_event_get_type(event)) {
-			case LIBINPUT_EVENT_DEVICE_ADDED:
-				type = "DEVICE ADDED";
-				break;
-	}
-	printf("%s", type);
-}
-
 int main()
 {
 	struct libinput *li;
@@ -61,7 +58,9 @@ int main()
 	struct libinput_event_gesture *gesture;
 	struct udev *udev;
 
-	udev = udev_new();
+	int gesture_ongoing = FALSE;
+
+	udev = udev_new();	
 
 	li = libinput_udev_create_context(&interface, 0, udev);
 	libinput_udev_assign_seat(li, "seat0");
@@ -69,14 +68,18 @@ int main()
 
 	while ((event = libinput_get_event(li)) != 0) {
 
-		print_event_type(event);
-		gesture = libinput_event_get_gesture_event(event);
-		switch(get_gesture_direction(gesture)) {
-			case LEFT:
-				sway_workspace_left();
-				break;
-			case RIGHT:
-				sway_workspace_right();
+		switch(libinput_event_get_type(event)) {
+			case LIBINPUT_EVENT_GESTURE_SWIPE_BEGIN:
+				gesture_ongoing = TRUE;
+				gesture = libinput_event_get_gesture_event(event);
+				switch(get_gesture_direction(gesture)) {
+					case LEFT:
+						sway_workspace_left();
+						break;
+					case RIGHT:
+						sway_workspace_right();
+						break;
+				}
 		}
 
 		libinput_event_destroy(event);
